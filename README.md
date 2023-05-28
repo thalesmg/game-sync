@@ -1,1 +1,1 @@
-# jelos-sync
+# game-sync
