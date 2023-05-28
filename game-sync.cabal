@@ -25,7 +25,13 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
+      GameSync
+      GameSync.Mame
+      GameSync.MegaDrive
+      GameSync.N64
+      GameSync.Ps1
+      GameSync.Snes
+      GameSync.Utils
   other-modules:
       Paths_game_sync
   hs-source-dirs:

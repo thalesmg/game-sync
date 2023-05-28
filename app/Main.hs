@@ -2,7 +2,7 @@
 
 module Main (main) where
 
-import Lib
+import GameSync (allRules)
 import Development.Shake (shakeArgs, shakeArgsWith, shakeOptions, withoutActions, want)
 -- import Options.Applicative (Parser, execParser, strOption, long, short, metavar, help, info, fullDesc)
 import System.Console.GetOpt (OptDescr(..), ArgDescr(..))
@@ -37,9 +37,5 @@ main = do
   -- MkOptions{inroot, outroot} <- execParser opts
   shakeArgsWith shakeOptions flags $ \opts targets -> do
     let [inroot, outroot] = opts
-    let rules = do
-          megaDriveRules inroot outroot
-          n64Rules inroot outroot
-          snesRules inroot outroot
-          ps1Rules inroot outroot
+    let rules = allRules inroot outroot
     pure . Just $ if null targets then rules else want targets >> withoutActions rules
