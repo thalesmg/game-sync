@@ -1,7 +1,8 @@
 module Lib where
 
+import Control.Arrow (first)
 import Control.Monad (when)
-import Development.Shake (FilePattern, Rules, Action, (%>), want, cmd_, need, phony, putInfo, removeFilesAfter, liftIO, getDirectoryFiles, getDirectoryFilesIO, copyFile', Stdout(..), cmd, doesFileExist, action)
+import Development.Shake (FilePattern, Rules, Action, (%>), want, cmd_, need, phony, putInfo, removeFilesAfter, liftIO, getDirectoryFiles, getDirectoryFilesIO, copyFile', Stdout(..), cmd, doesFileExist, action, (|%>))
 import Development.Shake.FilePath ((</>), (-<.>), (<.>), takeFileName, dropExtension)
 import Data.Foldable (traverse_)
 import Data.List (isSuffixOf, isInfixOf, stripPrefix, sortOn)
@@ -10,7 +11,7 @@ import qualified Data.Map as M
 import GHC.Stack (HasCallStack)
 
 mapFst :: Functor f => (a -> b) -> f (a, c) -> f (b, c)
-mapFst f = fmap (\(a, c) -> (f a, c))
+mapFst f = fmap (first f)
 
 debugR :: Show x => x -> Rules ()
 debugR = action . putInfo . show
@@ -122,6 +123,14 @@ ps1Rules inroot outroot = do
   let chdsOut = map ((outroot </>) . ("ps1" </>)) chdFiles
   want chdsOut
 
+  let bioss = [ "scph5501.bin"
+              ]
+      biossTargets = map ((outroot </>) . ("ps1" </>)) bioss
+  want biossTargets
+  biossTargets |%> \out -> do
+    let src = inroot </> "ps1" </> takeFileName out
+    copyFile' src out
+
   justCopyRules' "ps1" "*.chd" inroot outroot
 
 list7ZFiles :: FilePath -> Action [FilePath]
@@ -148,7 +157,7 @@ megaDriveInferInner = go
     (&.) Fail _ = error "eita"
     (&.) (Found x) _ = Found x
 
-    firstFilter [] xs = Fail
+    firstFilter [] _ = Fail
     firstFilter (f:fs) xs =
       case filter f xs of
         [] -> firstFilter fs xs
@@ -165,7 +174,7 @@ megaDriveInferInner = go
         lang "W",
         lang "E",
         lang "UE",
-        \_ -> True
+        const True
       ]
     lang c = isInfixOf ("(" <> c <> ")")
 
