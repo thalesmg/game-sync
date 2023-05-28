@@ -1,18 +1,19 @@
 module Lib where
 
 import Control.Monad (when)
-import Development.Shake (FilePattern, Rules, (%>), want, cmd_, need, phony, putInfo, removeFilesAfter, liftIO, getDirectoryFiles, getDirectoryFilesIO, copyFile', Stdout(..), cmd, doesFileExist)
+import Development.Shake (FilePattern, Rules, Action, (%>), want, cmd_, need, phony, putInfo, removeFilesAfter, liftIO, getDirectoryFiles, getDirectoryFilesIO, copyFile', Stdout(..), cmd, doesFileExist, action)
 import Development.Shake.FilePath ((</>), (-<.>), (<.>), takeFileName, dropExtension)
 import Data.Foldable (traverse_)
-import Data.List (isSuffixOf, isInfixOf, stripPrefix)
+import Data.List (isSuffixOf, isInfixOf, stripPrefix, sortOn)
+import Data.Ord (Down(..))
 import qualified Data.Map as M
 import GHC.Stack (HasCallStack)
 
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
-
 mapFst :: Functor f => (a -> b) -> f (a, c) -> f (b, c)
 mapFst f = fmap (\(a, c) -> (f a, c))
+
+debugR :: Show x => x -> Rules ()
+debugR = action . putInfo . show
 
 megaDriveRoms =
   M.fromList $
@@ -30,8 +31,9 @@ megaDriveRoms =
 
 megaDriveRules :: FilePath -> FilePath -> Rules ()
 megaDriveRules inroot outroot = do
-  want (map ((outroot </>) . ((<.> "zip") . ("megadrive" </>)))
-        (M.keys megaDriveRoms))
+  files <- liftIO $ getDirectoryFilesIO (inroot </> "megadrive") ["/*.7z"]
+  -- debugR files
+  want (map ((outroot </>) . ("megadrive" </>) . (-<.> "zip")) files)
 
   phony "clean" $ do
     putInfo "cleaning..."
@@ -39,7 +41,9 @@ megaDriveRules inroot outroot = do
 
   outroot </> "megadrive" </> "*.zip" %> \out -> do
     let src = inroot </> "megadrive" </> takeFileName out -<.> "7z"
-    let inner = megaDriveRoms M.! dropExtension (takeFileName out)
+    candidates <- list7ZFiles src
+    let -- inner = megaDriveRoms M.! dropExtension (takeFileName out)
+        Found inner = megaDriveInferInner candidates
         outdir = outroot </> "megadrive"
         outInner = outdir </> inner
     need [src]
@@ -120,7 +124,7 @@ ps1Rules inroot outroot = do
 
   justCopyRules' "ps1" "*.chd" inroot outroot
 
-list7ZFiles :: FilePath -> IO [FilePath]
+list7ZFiles :: FilePath -> Action [FilePath]
 list7ZFiles file7z = do
   Stdout info <- cmd "7z" "l" "-ba" "-slt" [file7z]
   pure [f | f' <- lines info, Just f <- [stripPrefix "Path = " f']]
@@ -136,6 +140,8 @@ megaDriveInferInner = go
     go xs = Continue xs
             &. firstFilter [filterGood]
             &. firstFilter filterLang
+            &. hasLeastTags
+            &. greatestRevision
 
     infixl 1 &.
     (&.) (Continue xs) f = f xs
@@ -158,6 +164,28 @@ megaDriveInferInner = go
       [ lang "U",
         lang "W",
         lang "E",
-        lang "UE"
+        lang "UE",
+        \_ -> True
       ]
     lang c = isInfixOf ("(" <> c <> ")")
+
+    hasLeastTags xs = let ts = map fst
+                               -- . sortOn snd
+                               . filter ((==) 0 . snd)
+                               . map (\x -> (x, length . filter (/= "!") $ tags x))
+                               $ xs
+                      in case ts of
+                           [] -> Continue xs
+                           [x] -> Found x
+                           _ -> Continue ts
+
+    greatestRevision xs = let [x] = take 1 . sortOn Down $ xs in Found x
+
+tags :: String -> [String]
+tags = goTags []
+
+goTags :: [String] -> String -> [String]
+goTags acc "" = acc
+goTags acc (c:cs)
+  | c == '[' = let (tag, _:rest) = span (/= ']') cs in goTags (tag : acc) rest
+  | otherwise = goTags acc cs
