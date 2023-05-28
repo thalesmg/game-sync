@@ -48,6 +48,7 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - game-sync
+    # - optparse-applicative
 
 tests:
   game-sync-test:
