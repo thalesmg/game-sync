@@ -26,10 +26,13 @@ source-repository head
 library
   exposed-modules:
       GameSync
+      GameSync.Dreamcast
+      GameSync.Gamecube
+      GameSync.Gba
       GameSync.Mame
       GameSync.MegaDrive
       GameSync.N64
-      GameSync.Ps1
+      GameSync.Psx
       GameSync.Snes
       GameSync.Utils
   other-modules:

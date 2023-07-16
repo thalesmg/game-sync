@@ -1,9 +1,12 @@
 module GameSync where
 
+import GameSync.Dreamcast (dreamcastRules)
+import GameSync.Gamecube (gamecubeRules)
+import GameSync.Gba (gbaRules)
 import GameSync.MegaDrive (megaDriveRules)
 import GameSync.N64 (n64Rules)
 import GameSync.Snes (snesRules)
-import GameSync.Ps1 (ps1Rules)
+import GameSync.Psx (psxRules)
 import GameSync.Mame (mame2003PlusRules)
 import Development.Shake (Rules, phony, putInfo, removeFilesAfter)
 
@@ -16,5 +19,8 @@ allRules inroot outroot = do
   megaDriveRules inroot outroot
   snesRules inroot outroot
   n64Rules inroot outroot
-  ps1Rules inroot outroot
+  psxRules inroot outroot
   mame2003PlusRules inroot outroot
+  gamecubeRules inroot outroot
+  gbaRules inroot outroot
+  dreamcastRules inroot outroot
