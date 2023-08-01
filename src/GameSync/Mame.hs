@@ -7,4 +7,4 @@ mame2003PlusRulesOPi5 :: FilePath -> FilePath -> Rules ()
 mame2003PlusRulesOPi5 = justCopyRules "mame2003plus" "mame" "*.zip"
 
 mame2003PlusRulesRPi4 :: FilePath -> FilePath -> Rules ()
-mame2003PlusRulesRPi4 = justCopyRules "mame2003plus" "arcade" "*.zip"
+mame2003PlusRulesRPi4 = justCopyRules "mame2003plus" "mame" "*.zip"
