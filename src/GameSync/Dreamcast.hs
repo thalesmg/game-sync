@@ -35,4 +35,4 @@ dreamcastRules inroot outroot = do
   let chdsOut = map ((outroot </>) . (systemSlug </>)) chdFiles
   want chdsOut
 
-  justCopyRules'' "dreamcast" (need chds) "*.chd" inroot outroot
+  justCopyRules'' "dreamcast" (need chds) ["*.chd"] inroot outroot

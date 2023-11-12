@@ -4,4 +4,4 @@ import Development.Shake (Rules)
 import GameSync.Utils (justCopyRules')
 
 gamecubeRules :: FilePath -> FilePath -> Rules ()
-gamecubeRules = justCopyRules' "gamecube" "*.iso"
+gamecubeRules = justCopyRules' "gamecube" ["*.iso"]

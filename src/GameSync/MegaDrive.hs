@@ -30,7 +30,7 @@ megaDriveRules inroot outroot = do
   files <- liftIO $ getDirectoryFilesIO (inroot </> "megadrive" </> "selected") ["/*.7z"]
   -- debugR files
   let preparedFiles = map ((inroot </>) . ("megadrive" </>) . (-<.> "zip")) files
-  want preparedFiles 
+  want preparedFiles
 
   inroot </> "megadrive" </> "*.zip" %> \out -> do
     b <- doesFileExist out
@@ -48,8 +48,8 @@ megaDriveRules inroot outroot = do
   phony "megadrive-pre" $ do
     need preparedFiles
 
-  justCopyRules' "megadrive" "*.zip" inroot outroot
-  
+  justCopyRules' "megadrive" ["*.zip"] inroot outroot
+
 data Sieve a = Fail
              | Continue [a]
              | Found a

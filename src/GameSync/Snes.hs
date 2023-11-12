@@ -4,4 +4,4 @@ import Development.Shake (Rules)
 import GameSync.Utils (justCopyRules')
 
 snesRules :: FilePath -> FilePath -> Rules ()
-snesRules = justCopyRules' "snes" "*.zip"
+snesRules = justCopyRules' "snes" ["*.zip"]

@@ -37,6 +37,4 @@ psxRules inroot outroot = do
     let src = inroot </> "psx" </> takeFileName out
     copyFile' src out
 
-  justCopyRules' "psx" "*.chd" inroot outroot
-
-  justCopyRules' "psx" "*.pbp" inroot outroot
+  justCopyRules' "psx" ["*.chd", "*.pbp"] inroot outroot
