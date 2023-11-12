@@ -4,7 +4,7 @@
 module Main (main) where
 
 import GameSync (allRulesOPi5, allRulesRPi4)
-import Development.Shake (shakeArgs, shakeArgsWith, shakeOptions, withoutActions, want)
+import Development.Shake (shakeArgs, shakeArgsWith, shakeOptions, withoutActions, want, action, putError)
 -- import Options.Applicative (Parser, execParser, strOption, long, short, metavar, help, info, fullDesc)
 import System.Console.GetOpt (OptDescr(..), ArgDescr(..))
 
@@ -27,8 +27,8 @@ import System.Console.GetOpt (OptDescr(..), ArgDescr(..))
 --         <> help "Root directory containing system directories to write to"
 --       )
 
-data System = OPi5 | RPi4
-data Opt = MkPath FilePath | MkSystem System
+data System = OPi5 | RPi4 deriving Show
+data Opt = MkPath FilePath | MkSystem System deriving Show
 
 flags :: [OptDescr (Either String Opt)]
 flags = [ Option "i" ["inroot"] (ReqArg (Right . MkPath) "INROOT") "Root directory containing system directories to read from"
@@ -45,8 +45,11 @@ main = do
   -- let opts = info optionsParser fullDesc
   -- MkOptions{inroot, outroot} <- execParser opts
   shakeArgsWith shakeOptions flags $ \opts targets -> do
-    let [MkPath inroot, MkPath outroot, MkSystem system] = opts
-    let rules = case system of
-                  OPi5 -> allRulesOPi5 inroot outroot
-                  RPi4 -> allRulesRPi4 inroot outroot
-    pure . Just $ if null targets then rules else want targets >> withoutActions rules
+    case opts of
+      [MkPath inroot, MkPath outroot, MkSystem system] -> do
+        let rules = case system of
+              OPi5 -> allRulesOPi5 inroot outroot
+              RPi4 -> allRulesRPi4 inroot outroot
+        pure . Just $ if null targets then rules else want targets >> withoutActions rules
+      _ -> 
+        pure . Just $ withoutActions (allRulesOPi5 "" "")

@@ -3,7 +3,8 @@ module GameSync.MegaDrive where
 import GameSync.Utils (list7ZFiles, justCopyRules')
 
 import qualified Data.Map as M
-import Development.Shake (Rules, liftIO, getDirectoryFilesIO, want, (%>), need, cmd_)
+import Control.Monad (when)
+import Development.Shake (Rules, liftIO, getDirectoryFilesIO, want, (%>), need, cmd_, phony, doesFileExist)
 import Development.Shake.FilePath ((</>), (-<.>), takeFileName)
 import GHC.Stack (HasCallStack)
 import Data.List (isInfixOf, sortOn)
@@ -28,21 +29,27 @@ megaDriveRules :: FilePath -> FilePath -> Rules ()
 megaDriveRules inroot outroot = do
   files <- liftIO $ getDirectoryFilesIO (inroot </> "megadrive" </> "selected") ["/*.7z"]
   -- debugR files
-  want (map ((inroot </>) . ("megadrive" </>) . (-<.> "zip")) files)
+  let preparedFiles = map ((inroot </>) . ("megadrive" </>) . (-<.> "zip")) files
+  want preparedFiles 
 
   inroot </> "megadrive" </> "*.zip" %> \out -> do
-    let src = inroot </> "megadrive" </> "selected" </> takeFileName out -<.> "7z"
-    candidates <- list7ZFiles src
-    let -- inner = megaDriveRoms M.! dropExtension (takeFileName out)
-        Found inner = megaDriveInferInner candidates
-        outdir = inroot </> "megadrive"
-        outInner = outdir </> inner
-    need [src]
-    cmd_ "7z" "x" "-aos" ["-o" <> outdir] ["-i!" <> inner] [src]
-    cmd_ "zip" "-m" [out] [outInner]
+    b <- doesFileExist out
+    when (not b) $ do
+      let src = inroot </> "megadrive" </> "selected" </> takeFileName out -<.> "7z"
+      candidates <- list7ZFiles src
+      let -- inner = megaDriveRoms M.! dropExtension (takeFileName out)
+	  Found inner = megaDriveInferInner candidates
+	  outdir = inroot </> "megadrive"
+	  outInner = outdir </> inner
+      need [src]
+      cmd_ "7z" "x" "-aos" ["-o" <> outdir] ["-i!" <> inner] [src]
+      cmd_ "zip" "-m" [out] [outInner]
+
+  phony "megadrive-pre" $ do
+    need preparedFiles
 
   justCopyRules' "megadrive" "*.zip" inroot outroot
-
+  
 data Sieve a = Fail
              | Continue [a]
              | Found a

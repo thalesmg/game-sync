@@ -8,7 +8,7 @@ import GameSync.N64 (n64Rules)
 import GameSync.Snes (snesRules)
 import GameSync.Psx (psxRules)
 import GameSync.Mame (mame2003PlusRulesOPi5, mame2003PlusRulesRPi4)
-import Development.Shake (Rules, phony, putInfo, removeFilesAfter)
+import Development.Shake (Rules, phony, putInfo, removeFilesAfter, addTarget)
 
 allRulesOPi5 :: FilePath -> FilePath -> Rules ()
 allRulesOPi5 inroot outroot = do

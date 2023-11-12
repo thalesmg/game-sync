@@ -1,7 +1,7 @@
 module GameSync.Utils where
 
 import Control.Arrow (first)
-import Development.Shake (Action, Stdout(..), cmd, FilePattern, Rules, liftIO, getDirectoryFilesIO, want, (%>), copyFile', action, putInfo)
+import Development.Shake (Action, Stdout(..), cmd, FilePattern, Rules, liftIO, getDirectoryFilesIO, want, (%>), copyFile', action, putInfo, phony, need)
 import Development.Shake.FilePath ((</>), takeFileName)
 import Data.List (stripPrefix)
 
@@ -10,8 +10,8 @@ list7ZFiles file7z = do
   Stdout info <- cmd "7z" "l" "-ba" "-slt" [file7z]
   pure [f | f' <- lines info, Just f <- [stripPrefix "Path = " f']]
 
-justCopyRules :: FilePath -> FilePath -> FilePattern -> FilePath -> FilePath -> Rules ()
-justCopyRules slugin slugout pat inroot outroot = do
+justCopyRules :: String -> Action () -> FilePath -> FilePath -> FilePattern -> FilePath -> FilePath -> Rules ()
+justCopyRules phonyTargetName phonyExtraNeeds slugin slugout pat inroot outroot = do
   files <- liftIO $ getDirectoryFilesIO (inroot </> slugin) ["/" <> pat]
   let outFiles = map ((outroot </>) . (slugout </>) . takeFileName) files
   want outFiles
@@ -20,8 +20,15 @@ justCopyRules slugin slugout pat inroot outroot = do
     let src = inroot </> slugin </> takeFileName out
     copyFile' src out
 
+  phony phonyTargetName $ do
+    phonyExtraNeeds
+    need outFiles
+
 justCopyRules' :: FilePath -> FilePattern -> FilePath -> FilePath -> Rules ()
-justCopyRules' slug = justCopyRules slug slug
+justCopyRules' slug = justCopyRules'' slug (pure ())
+
+justCopyRules'' :: FilePath -> Action () -> FilePattern -> FilePath -> FilePath -> Rules ()
+justCopyRules'' slug phonyExtraNeeds = justCopyRules slug phonyExtraNeeds slug slug
 
 mapFst :: Functor f => (a -> b) -> f (a, c) -> f (b, c)
 mapFst f = fmap (first f)
