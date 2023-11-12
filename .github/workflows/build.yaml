@@ -1,0 +1,47 @@
+name: build
+
+on: [push]
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: haskell-actions/setup@v2
+        id: setup
+        with:
+          ghc-version: '9.0.2' # Exact version of ghc to use
+          # cabal-version: 'latest'. Omitted, but defaults to 'latest'
+          enable-stack: true
+          stack-version: 'latest'
+      - name: Restore cached dependencies
+        uses: actions/cache/restore@v3
+        id: cache
+        env:
+          key: ghc-${{ steps.setup.outputs.ghc-version }}-stack-${{ steps.setup.outputs.stack-version }}
+        with:
+          path: |
+            .stack
+            ${{ steps.setup.outputs.stack-root }}
+          key: ${{ env.key }}-plan-${{ hashFiles('package.yaml', 'stack.yaml.lock') }}
+          restore-keys: ${{ env.key }}-
+
+      - name: Install dependencies
+        # If we had an exact cache hit, the dependencies will be up to date.
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: stack build --only-dependencies
+
+      # Cache dependencies already here, so that we do not have to rebuild them should the subsequent steps fail.
+      - name: Save cached dependencies
+        uses: actions/cache/save@v3
+        # If we had an exact cache hit, trying to save the cache would error because of key clash.
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          path: |
+            .stack
+            ${{ steps.setup.outputs.stack-root }}
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+
+      - name: build
+        run: stack build
