@@ -27,7 +27,7 @@ megaDriveRoms =
 
 megaDriveRules :: FilePath -> FilePath -> Rules ()
 megaDriveRules inroot outroot = do
-  files <- liftIO $ getDirectoryFilesIO (inroot </> "megadrive" </> "selected") ["/*.7z"]
+  files <- liftIO $ getDirectoryFilesIO (inroot </> "megadrive-selected") ["/*.7z"]
   -- debugR files
   let preparedFiles = map ((inroot </>) . ("megadrive" </>) . (-<.> "zip")) files
   want preparedFiles
@@ -35,7 +35,7 @@ megaDriveRules inroot outroot = do
   inroot </> "megadrive" </> "*.zip" %> \out -> do
     b <- doesFileExist out
     when (not b) $ do
-      let src = inroot </> "megadrive" </> "selected" </> takeFileName out -<.> "7z"
+      let src = inroot </> "megadrive-selected" </> takeFileName out -<.> "7z"
       candidates <- list7ZFiles src
       let -- inner = megaDriveRoms M.! dropExtension (takeFileName out)
 	  Found inner = megaDriveInferInner candidates
