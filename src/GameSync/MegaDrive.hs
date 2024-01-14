@@ -4,7 +4,7 @@ import GameSync.Utils (list7ZFiles, justCopyRules')
 
 import qualified Data.Map as M
 import Control.Monad (when)
-import Development.Shake (Rules, liftIO, getDirectoryFilesIO, want, (%>), need, cmd_, phony, doesFileExist)
+import Development.Shake (Rules, CmdOption (Cwd), liftIO, getDirectoryFilesIO, want, (%>), need, cmd_, phony, doesFileExist)
 import Development.Shake.FilePath ((</>), (-<.>), takeFileName)
 import GHC.Stack (HasCallStack)
 import Data.List (isInfixOf, sortOn)
@@ -43,7 +43,7 @@ megaDriveRules inroot outroot = do
 	  outInner = outdir </> inner
       need [src]
       cmd_ "7z" "x" "-aos" ["-o" <> outdir] ["-i!" <> inner] [src]
-      cmd_ "zip" "-m" [out] [outInner]
+      cmd_ (Cwd outdir) "zip" "-m" [out] [inner]
 
   phony "megadrive-pre" $ do
     need preparedFiles
